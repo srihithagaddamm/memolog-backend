@@ -69,18 +69,23 @@ const userSchema = new mongoose.Schema({
 
 }, { timestamps: true });
 
-// ── HASH PASSWORD BEFORE SAVING ──
+// ── HASH PASSWORD AND PIN BEFORE SAVING ──
 userSchema.pre('save', async function(next) {
-  if (!this.isModified('password') || !this.password) return next();
-  this.password = await bcrypt.hash(this.password, 12);
-  next();
-});
-
-// ── HASH PIN BEFORE SAVING ──
-userSchema.pre('save', async function(next) {
-  if (!this.isModified('pin') || !this.pin) return next();
-  this.pin = await bcrypt.hash(this.pin, 10);
-  next();
+  try {
+    // Hash password if modified
+    if (this.isModified('password') && this.password) {
+      this.password = await bcrypt.hash(this.password, 12);
+    }
+    
+    // Hash PIN if modified
+    if (this.isModified('pin') && this.pin) {
+      this.pin = await bcrypt.hash(this.pin, 10);
+    }
+    
+    next();
+  } catch (error) {
+    next(error);
+  }
 });
 
 // ── METHOD: check password ──
